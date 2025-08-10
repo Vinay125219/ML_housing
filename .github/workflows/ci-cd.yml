@@ -1,5 +1,4 @@
 name: Enhanced MLOps CI/CD Pipeline
-name: Enhanced MLOps CI/CD Pipeline
 
 on:
   push:
@@ -24,13 +23,6 @@ env:
   schedule:
     # Run daily at 2 AM UTC for model retraining
     - cron: "0 2 * * *"
-
-env:
-  PYTHON_VERSION: "3.10"
-  DOCKER_REGISTRY: docker.io
-  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-  IMAGE_NAME: mlops-housing-pipeline
 
 jobs:
   code-quality:
