@@ -34,6 +34,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Ensure MLflow logs locally inside the repo (works in CI and scripts)
+mlflow.set_tracking_uri("file:./mlruns")
+
 
 class ModelPerformanceMonitor:
     """Monitor model performance and detect when retraining is needed."""
@@ -72,9 +75,9 @@ class ModelPerformanceMonitor:
             cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
 
             query = f"""
-            SELECT timestamp, inputs, prediction 
-            FROM {table_name} 
-            WHERE timestamp > ? 
+            SELECT timestamp, inputs, prediction
+            FROM {table_name}
+            WHERE timestamp > ?
             ORDER BY timestamp DESC
             """
 
@@ -161,6 +164,8 @@ class ModelPerformanceMonitor:
         logger.info(f"{model_type} model performance: {performance}")
         return performance
 
+        mlflow.set_experiment("housing_price_prediction")
+
 
 class ModelRetrainer:
     """Handle automated model retraining."""
@@ -231,7 +236,7 @@ class ModelRetrainer:
                     input_example = X_test.head(2)
                     mlflow.sklearn.log_model(
                         sk_model=model,
-                        artifact_path="model",
+                        name="model",
                         input_example=input_example,
                         signature=signature,
                     )
@@ -352,7 +357,7 @@ class ModelRetrainer:
                     input_example = X_test.head(2)
                     mlflow.sklearn.log_model(
                         sk_model=model,
-                        artifact_path="model",
+                        name="model",
                         input_example=input_example,
                         signature=signature,
                     )

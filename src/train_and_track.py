@@ -9,6 +9,10 @@ from mlflow.models.signature import infer_signature
 import joblib
 import os
 
+# Ensure MLflow logs locally inside the repo (works in CI)
+mlflow.set_tracking_uri("file:./mlruns")
+mlflow.set_experiment("housing_price_prediction")
+
 # Load preprocessed data
 df = pd.read_csv("data/housing.csv")
 X = df.drop("MedHouseVal", axis=1)
@@ -24,6 +28,7 @@ os.makedirs("models", exist_ok=True)
 
 # Store model performance for comparison
 model_performance = {}
+
 
 def train_and_log_model(model, model_name):
     with mlflow.start_run(run_name=model_name) as run:
@@ -42,22 +47,25 @@ def train_and_log_model(model, model_name):
 
         mlflow.sklearn.log_model(
             sk_model=model,
-            artifact_path="model",
+            name="model",
             input_example=input_example,
-            signature=signature
+            signature=signature,
         )
 
         # Save locally
         joblib.dump(model, f"models/{model_name}.pkl")
 
-        print(f"✅ {model_name} | MSE: {mse:.3f} | R2 Score: {r2:.3f} | Saved to models/{model_name}.pkl")
-        
+        print(
+            f"✅ {model_name} | MSE: {mse:.3f} | R2 Score: {r2:.3f} | Saved to models/{model_name}.pkl"
+        )
+
         # Store performance for comparison
         model_performance[model_name] = {
-            'mse': mse,
-            'r2': r2,
-            'run_id': run.info.run_id
+            "mse": mse,
+            "r2": r2,
+            "run_id": run.info.run_id,
         }
+
 
 # Train models
 train_and_log_model(LinearRegression(), "LinearRegression")
@@ -70,7 +78,9 @@ for model_name, metrics in model_performance.items():
     print(f"{model_name}: MSE={metrics['mse']:.3f}, R2={metrics['r2']:.3f}")
 
 # Find the best model (lower MSE, higher R2)
-best_model_name = min(model_performance.keys(), key=lambda x: model_performance[x]['mse'])
+best_model_name = min(
+    model_performance.keys(), key=lambda x: model_performance[x]["mse"]
+)
 best_metrics = model_performance[best_model_name]
 
 print(f"\n🏆 Best Model: {best_model_name}")
@@ -80,9 +90,10 @@ print(f"   R2 Score: {best_metrics['r2']:.3f}")
 # Register the best model
 try:
     registered_model = mlflow.register_model(
-        model_uri=f"runs:/{best_metrics['run_id']}/model",
-        name="HousingPricePredictor"
+        model_uri=f"runs:/{best_metrics['run_id']}/model", name="HousingPricePredictor"
     )
-    print(f"✅ Successfully registered 'HousingPricePredictor' model (version {registered_model.version})")
+    print(
+        f"✅ Successfully registered 'HousingPricePredictor' model (version {registered_model.version})"
+    )
 except Exception as e:
     print(f"⚠️  HousingPricePredictor already registered or error: {e}")

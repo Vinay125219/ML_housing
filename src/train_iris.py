@@ -10,6 +10,10 @@ from mlflow.tracking import MlflowClient
 import joblib
 import os
 
+# Ensure MLflow logs locally inside the repo (works in CI)
+mlflow.set_tracking_uri("file:./mlruns")
+mlflow.set_experiment("iris_classification")
+
 # Load data
 data = load_iris(as_frame=True)
 df = data.frame
@@ -25,6 +29,7 @@ os.makedirs("models", exist_ok=True)
 
 # Store model performance for comparison
 model_performance = {}
+
 
 def train_and_log_model(model, model_name):
     with mlflow.start_run(run_name=model_name) as run:
@@ -43,22 +48,25 @@ def train_and_log_model(model, model_name):
 
         mlflow.sklearn.log_model(
             sk_model=model,
-            artifact_path="model",
+            name="model",
             input_example=input_example,
-            signature=signature
+            signature=signature,
         )
 
         # Save locally
         joblib.dump(model, f"models/{model_name}.pkl")
 
-        print(f"✅ {model_name} | Accuracy: {acc:.3f} | F1 Score: {f1:.3f} | Saved to models/{model_name}.pkl")
-        
+        print(
+            f"✅ {model_name} | Accuracy: {acc:.3f} | F1 Score: {f1:.3f} | Saved to models/{model_name}.pkl"
+        )
+
         # Store performance for comparison
         model_performance[model_name] = {
-            'accuracy': acc,
-            'f1': f1,
-            'run_id': run.info.run_id
+            "accuracy": acc,
+            "f1": f1,
+            "run_id": run.info.run_id,
         }
+
 
 # Train models
 train_and_log_model(LogisticRegression(max_iter=200), "LogisticRegression")
@@ -71,7 +79,10 @@ for model_name, metrics in model_performance.items():
     print(f"{model_name}: Accuracy={metrics['accuracy']:.3f}, F1={metrics['f1']:.3f}")
 
 # Find the best model (higher accuracy and F1)
-best_model_name = max(model_performance.keys(), key=lambda x: (model_performance[x]['accuracy'], model_performance[x]['f1']))
+best_model_name = max(
+    model_performance.keys(),
+    key=lambda x: (model_performance[x]["accuracy"], model_performance[x]["f1"]),
+)
 best_metrics = model_performance[best_model_name]
 
 print(f"\n🏆 Best Model: {best_model_name}")
@@ -81,9 +92,10 @@ print(f"   F1 Score: {best_metrics['f1']:.3f}")
 # Register the best model
 try:
     registered_model = mlflow.register_model(
-        model_uri=f"runs:/{best_metrics['run_id']}/model",
-        name="IrisClassifier"
+        model_uri=f"runs:/{best_metrics['run_id']}/model", name="IrisClassifier"
     )
-    print(f"✅ Successfully registered 'IrisClassifier' model (version {registered_model.version})")
+    print(
+        f"✅ Successfully registered 'IrisClassifier' model (version {registered_model.version})"
+    )
 except Exception as e:
     print(f"⚠️  IrisClassifier already registered or error: {e}")
