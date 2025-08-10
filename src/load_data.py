@@ -1,6 +1,7 @@
 from sklearn.datasets import fetch_california_housing
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+import os
 
 def load_and_save():
     # Load the data

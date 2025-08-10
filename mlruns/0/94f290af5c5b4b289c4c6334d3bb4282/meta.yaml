@@ -1,0 +1,14 @@
+artifact_uri: file:///home/astra/Documents/mlops-housing-pipeline%281%29/mlops-housing-pipeline/mlruns/0/94f290af5c5b4b289c4c6334d3bb4282/artifacts
+end_time: 1754827826054
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 94f290af5c5b4b289c4c6334d3bb4282
+run_name: RandomForest
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754827820690
+status: 3
+tags: []
+user_id: vinay

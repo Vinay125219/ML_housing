@@ -1,0 +1,10 @@
+artifact_location: file:///home/astra/Documents/mlops-housing-pipeline%281%29/mlops-housing-pipeline/mlruns/0/models/m-e7fb6ee4bcdc4314862b0998d971080a/artifacts
+creation_timestamp: 1754827821062
+experiment_id: '0'
+last_updated_timestamp: 1754827825979
+model_id: m-e7fb6ee4bcdc4314862b0998d971080a
+model_type: null
+name: model
+source_run_id: 94f290af5c5b4b289c4c6334d3bb4282
+status: 2
+status_message: null

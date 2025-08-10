@@ -22,8 +22,11 @@ X_train, X_test, y_train, y_test = train_test_split(
 # Create models directory if not exists
 os.makedirs("models", exist_ok=True)
 
+# Store model performance for comparison
+model_performance = {}
+
 def train_and_log_model(model, model_name):
-    with mlflow.start_run(run_name=model_name):
+    with mlflow.start_run(run_name=model_name) as run:
         model.fit(X_train, y_train)
         preds = model.predict(X_test)
 
@@ -48,6 +51,38 @@ def train_and_log_model(model, model_name):
         joblib.dump(model, f"models/{model_name}.pkl")
 
         print(f"✅ {model_name} | MSE: {mse:.3f} | R2 Score: {r2:.3f} | Saved to models/{model_name}.pkl")
+        
+        # Store performance for comparison
+        model_performance[model_name] = {
+            'mse': mse,
+            'r2': r2,
+            'run_id': run.info.run_id
+        }
 
+# Train models
 train_and_log_model(LinearRegression(), "LinearRegression")
 train_and_log_model(DecisionTreeRegressor(max_depth=5), "DecisionTree")
+
+# Register the best model based on performance
+print("\n📊 Model Performance Comparison:")
+print("=" * 40)
+for model_name, metrics in model_performance.items():
+    print(f"{model_name}: MSE={metrics['mse']:.3f}, R2={metrics['r2']:.3f}")
+
+# Find the best model (lower MSE, higher R2)
+best_model_name = min(model_performance.keys(), key=lambda x: model_performance[x]['mse'])
+best_metrics = model_performance[best_model_name]
+
+print(f"\n🏆 Best Model: {best_model_name}")
+print(f"   MSE: {best_metrics['mse']:.3f}")
+print(f"   R2 Score: {best_metrics['r2']:.3f}")
+
+# Register the best model
+try:
+    registered_model = mlflow.register_model(
+        model_uri=f"runs:/{best_metrics['run_id']}/model",
+        name="HousingPricePredictor"
+    )
+    print(f"✅ Successfully registered 'HousingPricePredictor' model (version {registered_model.version})")
+except Exception as e:
+    print(f"⚠️  HousingPricePredictor already registered or error: {e}")

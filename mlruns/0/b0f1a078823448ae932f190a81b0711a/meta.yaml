@@ -1,0 +1,14 @@
+artifact_uri: file:///home/astra/Documents/mlops-housing-pipeline%281%29/mlops-housing-pipeline/mlruns/0/b0f1a078823448ae932f190a81b0711a/artifacts
+end_time: 1754830969681
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: b0f1a078823448ae932f190a81b0711a
+run_name: Retrain_LinearRegression_20250810_183249
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754830969508
+status: 3
+tags: []
+user_id: vinay

@@ -1,6 +1,6 @@
-artifact_location: file:///C:/Users/gargi/mlops-housing-pipeline/mlruns/0
-creation_time: 1754216264413
+artifact_location: file:///home/astra/Documents/mlops-housing-pipeline%281%29/mlops-housing-pipeline/mlruns/0
+creation_time: 1754629206888
 experiment_id: '0'
-last_update_time: 1754216264413
+last_update_time: 1754629206888
 lifecycle_stage: active
 name: Default

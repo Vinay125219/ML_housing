@@ -1,0 +1,14 @@
+artifact_uri: file:///home/astra/Documents/mlops-housing-pipeline%281%29/mlops-housing-pipeline/mlruns/0/915677235b5c4a0a81b7856509ddb113/artifacts
+end_time: 1754830969988
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 915677235b5c4a0a81b7856509ddb113
+run_name: Retrain_DecisionTree_20250810_183249
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754830969715
+status: 3
+tags: []
+user_id: vinay

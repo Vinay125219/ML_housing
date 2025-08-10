@@ -1,0 +1,14 @@
+artifact_uri: file:///home/astra/Documents/mlops-housing-pipeline%281%29/mlops-housing-pipeline/mlruns/0/153bd3032f6747dab77a8c1061af2840/artifacts
+end_time: 1754629217765
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 153bd3032f6747dab77a8c1061af2840
+run_name: LogisticRegression
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754629216380
+status: 3
+tags: []
+user_id: astra

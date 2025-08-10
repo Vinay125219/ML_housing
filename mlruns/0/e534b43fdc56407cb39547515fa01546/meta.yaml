@@ -1,0 +1,14 @@
+artifact_uri: file:///home/astra/Documents/mlops-housing-pipeline%281%29/mlops-housing-pipeline/mlruns/0/e534b43fdc56407cb39547515fa01546/artifacts
+end_time: 1754635633960
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: e534b43fdc56407cb39547515fa01546
+run_name: DecisionTree
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754635632647
+status: 3
+tags: []
+user_id: astra

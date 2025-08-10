@@ -1,0 +1,14 @@
+{
+  "model_name": "LogisticRegression",
+  "performance": {
+    "model_name": "LogisticRegression",
+    "mse": null,
+    "r2_score": null,
+    "accuracy": 1.0,
+    "f1_score": 1.0,
+    "run_id": "92c94aa28e764530a6ac8712806d39de"
+  },
+  "model_path": "models/LogisticRegression.pkl",
+  "registered_model_name": "IrisClassifier",
+  "registered_version": 2
+}

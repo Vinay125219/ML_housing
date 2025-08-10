@@ -1,0 +1,72 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Housing Price Prediction API
+  - job_name: 'housing-api'
+    static_configs:
+      - targets: ['housing-api:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # Housing API MLOps Metrics
+  - job_name: 'housing-api-mlops'
+    static_configs:
+      - targets: ['housing-api:8000']
+    metrics_path: '/mlops-metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # Iris Classification API
+  - job_name: 'iris-api'
+    static_configs:
+      - targets: ['iris-api:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # Iris API MLOps Metrics
+  - job_name: 'iris-api-mlops'
+    static_configs:
+      - targets: ['iris-api:8001']
+    metrics_path: '/mlops-metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # Model Retraining Service
+  - job_name: 'retraining-service'
+    static_configs:
+      - targets: ['retraining-service:8002']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # MLflow Tracking Server
+  - job_name: 'mlflow'
+    static_configs:
+      - targets: ['mlflow:5000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+# Alerting rules (optional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Rule files for alerting (optional)
+# rule_files:
+#   - "alert_rules.yml"
