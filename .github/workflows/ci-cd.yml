@@ -156,21 +156,28 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Verify Dockerfile presence
+      - name: Verify Dockerfile presence and set path
         run: |
           echo "Workspace: $(pwd)"
           ls -la
-          if [ ! -f Dockerfile ]; then
+          if [ -f Dockerfile ]; then
+            echo "Found Dockerfile"
+            echo "DOCKERFILE_PATH=Dockerfile" >> $GITHUB_ENV
+            head -n 5 Dockerfile
+          elif [ -f DockerFile ]; then
+            echo "Found DockerFile (non-standard casing)"
+            echo "DOCKERFILE_PATH=DockerFile" >> $GITHUB_ENV
+            head -n 5 DockerFile
+          else
             echo "ERROR: Dockerfile not found in workspace" >&2
             exit 1
           fi
-          echo "Top of Dockerfile:" && head -n 20 Dockerfile
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ${{ env.DOCKERFILE_PATH }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
