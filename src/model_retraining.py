@@ -164,8 +164,6 @@ class ModelPerformanceMonitor:
         logger.info(f"{model_type} model performance: {performance}")
         return performance
 
-        mlflow.set_experiment("housing_price_prediction")
-
 
 class ModelRetrainer:
     """Handle automated model retraining."""
