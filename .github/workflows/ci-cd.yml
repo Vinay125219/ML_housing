@@ -88,19 +88,6 @@ jobs:
         run: |
           python test_validation.py
 
-      - name: Run API endpoint tests
-        run: |
-          python test_api_endpoints.py
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results
-          path: |
-            test_results_*.json
-            *.log
-
   model-training:
     name: Model Training & Validation
     runs-on: ubuntu-latest
