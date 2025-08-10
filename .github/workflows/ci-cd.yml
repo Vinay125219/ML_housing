@@ -75,6 +75,10 @@ jobs:
         run: |
           mkdir -p models data housinglogs irislogs mlruns
 
+      - name: Prepare data (generate housing.csv)
+        run: |
+          python src/load_data.py
+
       - name: Train models for testing
         run: |
           python src/train_and_track.py
