@@ -25,7 +25,7 @@ services:
     image: grafana/grafana:latest
     container_name: mlops-grafana
     ports:
-      - "3000:3000"
+      - "3001:3000"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
@@ -105,8 +105,43 @@ services:
       - ./mlruns:/app/mlruns
     working_dir: /app
     command: >
-      bash -c "pip install mlflow && 
+      bash -c "pip install mlflow &&
                mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri file:///app/mlruns"
+    networks:
+      - mlops-network
+
+  # Auto-open browser after all services are ready (Windows & Linux)
+  open-browser:
+    image: alpine:latest
+    container_name: mlops-open-browser
+    depends_on:
+      - housing-api
+      - iris-api
+      - retraining-service
+      - mlflow
+      - grafana
+      - prometheus
+    command: >
+      sh -c "
+      apk add --no-cache curl bash &&
+      until curl -s http://housing-api:8000/health > /dev/null; do echo 'Waiting for Housing API...'; sleep 2; done &&
+      until curl -s http://iris-api:8001/health > /dev/null; do echo 'Waiting for Iris API...'; sleep 2; done &&
+      until curl -s http://mlflow:5000 > /dev/null; do echo 'Waiting for MLflow...'; sleep 2; done &&
+      until curl -s http://grafana:3001 > /dev/null; do echo 'Waiting for Grafana...'; sleep 2; done &&
+      until curl -s http://prometheus:9090 > /dev/null; do echo 'Waiting for Prometheus...'; sleep 2; done &&
+      if grep -qi microsoft /proc/version; then
+        echo 'Opening browser on Windows...' &&
+        powershell.exe start http://localhost:8000 http://localhost:8001 http://localhost:8002 http://localhost:5000 http://localhost:3000 http://localhost:9090;
+      else
+        echo 'Opening browser on Linux...' &&
+        xdg-open http://localhost:8000 &&
+        xdg-open http://localhost:8001 &&
+        xdg-open http://localhost:8002 &&
+        xdg-open http://localhost:5000 &&
+        xdg-open http://localhost:3001 &&
+        xdg-open http://localhost:9090;
+      fi
+      "
     networks:
       - mlops-network
 

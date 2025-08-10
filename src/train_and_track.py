@@ -56,7 +56,7 @@ def train_and_log_model(model, model_name):
         joblib.dump(model, f"models/{model_name}.pkl")
 
         print(
-            f"✅ {model_name} | MSE: {mse:.3f} | R2 Score: {r2:.3f} | Saved to models/{model_name}.pkl"
+            f"[OK] {model_name} | MSE: {mse:.3f} | R2 Score: {r2:.3f} | Saved to models/{model_name}.pkl"
         )
 
         # Store performance for comparison
@@ -72,7 +72,7 @@ train_and_log_model(LinearRegression(), "LinearRegression")
 train_and_log_model(DecisionTreeRegressor(max_depth=5), "DecisionTree")
 
 # Register the best model based on performance
-print("\n📊 Model Performance Comparison:")
+print("\n[INFO] Model Performance Comparison:")
 print("=" * 40)
 for model_name, metrics in model_performance.items():
     print(f"{model_name}: MSE={metrics['mse']:.3f}, R2={metrics['r2']:.3f}")
@@ -83,7 +83,7 @@ best_model_name = min(
 )
 best_metrics = model_performance[best_model_name]
 
-print(f"\n🏆 Best Model: {best_model_name}")
+print(f"\n[INFO] Best Model: {best_model_name}")
 print(f"   MSE: {best_metrics['mse']:.3f}")
 print(f"   R2 Score: {best_metrics['r2']:.3f}")
 
@@ -93,7 +93,7 @@ try:
         model_uri=f"runs:/{best_metrics['run_id']}/model", name="HousingPricePredictor"
     )
     print(
-        f"✅ Successfully registered 'HousingPricePredictor' model (version {registered_model.version})"
+        f"[OK] Successfully registered 'HousingPricePredictor' model (version {registered_model.version})"
     )
 except Exception as e:
-    print(f"⚠️  HousingPricePredictor already registered or error: {e}")
+    print(f"[WARN] HousingPricePredictor already registered or error: {e}")

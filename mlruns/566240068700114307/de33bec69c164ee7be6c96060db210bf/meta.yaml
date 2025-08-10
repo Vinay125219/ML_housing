@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/vinay/OneDrive/Desktop/mlops-housing-pipeline (2) (1)/mlops-housing-pipeline/mlruns/566240068700114307/de33bec69c164ee7be6c96060db210bf/artifacts
+end_time: 1754842309378
+entry_point_name: ''
+experiment_id: '566240068700114307'
+lifecycle_stage: active
+run_id: de33bec69c164ee7be6c96060db210bf
+run_name: LinearRegression
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754842291885
+status: 3
+tags: []
+user_id: vinay

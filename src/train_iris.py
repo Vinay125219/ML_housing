@@ -57,7 +57,7 @@ def train_and_log_model(model, model_name):
         joblib.dump(model, f"models/{model_name}.pkl")
 
         print(
-            f"✅ {model_name} | Accuracy: {acc:.3f} | F1 Score: {f1:.3f} | Saved to models/{model_name}.pkl"
+            f"[OK] {model_name} | Accuracy: {acc:.3f} | F1 Score: {f1:.3f} | Saved to models/{model_name}.pkl"
         )
 
         # Store performance for comparison
@@ -73,7 +73,7 @@ train_and_log_model(LogisticRegression(max_iter=200), "LogisticRegression")
 train_and_log_model(RandomForestClassifier(n_estimators=100), "RandomForest")
 
 # Register the best model based on performance
-print("\n📊 Model Performance Comparison:")
+print("\n[INFO] Model Performance Comparison:")
 print("=" * 40)
 for model_name, metrics in model_performance.items():
     print(f"{model_name}: Accuracy={metrics['accuracy']:.3f}, F1={metrics['f1']:.3f}")
@@ -85,7 +85,7 @@ best_model_name = max(
 )
 best_metrics = model_performance[best_model_name]
 
-print(f"\n🏆 Best Model: {best_model_name}")
+print(f"\n[INFO] Best Model: {best_model_name}")
 print(f"   Accuracy: {best_metrics['accuracy']:.3f}")
 print(f"   F1 Score: {best_metrics['f1']:.3f}")
 
@@ -95,7 +95,7 @@ try:
         model_uri=f"runs:/{best_metrics['run_id']}/model", name="IrisClassifier"
     )
     print(
-        f"✅ Successfully registered 'IrisClassifier' model (version {registered_model.version})"
+        f"[OK] Successfully registered 'IrisClassifier' model (version {registered_model.version})"
     )
 except Exception as e:
-    print(f"⚠️  IrisClassifier already registered or error: {e}")
+    print(f"[WARN] IrisClassifier already registered or error: {e}")

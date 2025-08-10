@@ -1,0 +1,11 @@
+artifact_location: file:///C:/Users/vinay/OneDrive/Desktop/mlops-housing-pipeline
+  (2) (1)/mlops-housing-pipeline/mlruns/566240068700114307/models/m-23a98592e2d64f38be439c336084cb67/artifacts
+creation_timestamp: 1754842195953
+experiment_id: '566240068700114307'
+last_updated_timestamp: 1754842207373
+model_id: m-23a98592e2d64f38be439c336084cb67
+model_type: null
+name: model
+source_run_id: 9cd6bfff38d84fbeb7afdb121fb1c2b0
+status: 2
+status_message: null
