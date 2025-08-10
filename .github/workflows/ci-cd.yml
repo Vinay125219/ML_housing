@@ -12,17 +12,16 @@ on:
 # Global caching for faster runs
 concurrency: ci-${{ github.ref }}
 
+permissions:
+  contents: read
+  security-events: write
+
 env:
   PYTHON_VERSION: "3.10"
   DOCKER_REGISTRY: docker.io
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
   IMAGE_NAME: mlops-housing-pipeline
-  pull_request:
-    branches: [main, develop]
-  schedule:
-    # Run daily at 2 AM UTC for model retraining
-    - cron: "0 2 * * *"
 
 jobs:
   code-quality:
