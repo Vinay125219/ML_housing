@@ -1,6 +1,6 @@
 import sys
 import time
-from fastapi import FastAPI, HTTPException, Response, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel, Field, validator, ValidationError
 from typing import Optional, Dict, Any
 import pandas as pd
@@ -54,14 +54,7 @@ app = FastAPI(
     title="MLOps Iris Classification API",
     description="A comprehensive MLOps pipeline for iris flower classification with automated training, deployment, monitoring, and retraining capabilities.",
     version="1.0.0",
-    contact={
-        "name": "MLOps Team",
-        "email": "mlops@example.com",
-    },
-    license_info={
-        "name": "MIT",
-        "url": "https://opensource.org/licenses/MIT",
-    },
+
 )
 # Expose Prometheus metrics at /metrics
 Instrumentator().instrument(app).expose(
@@ -509,7 +502,7 @@ def run_model_retraining(
 
 
 @app.post("/retrain", response_model=RetrainResponse)
-def retrain_model(request: RetrainRequest, background_tasks: BackgroundTasks):
+def retrain_model(request: RetrainRequest):
     """
     Retrain Model
 
@@ -529,26 +522,25 @@ def retrain_model(request: RetrainRequest, background_tasks: BackgroundTasks):
             },
         )
 
-    # Generate task ID
-    task_id = f"retrain_{request.model_type or 'all'}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-
-    # Start retraining in background
-    background_tasks.add_task(
-        run_model_retraining,
+    # Run retraining synchronously (blocking)
+    run_model_retraining(
         model_type=request.model_type,
         force=request.force,
         new_data_path=request.new_data_path,
     )
 
-    # Log the retraining request
+    # Log the retraining completion
     logging.info(
-        f"Retraining requested: model_type={request.model_type}, force={request.force}"
+        f"Retraining completed: model_type={request.model_type}, force={request.force}, new_data_path={request.new_data_path}"
     )
 
+    # Build response from last_result
+    result = retraining_status.get("last_result") or {}
+    status = result.get("status", "completed")
     return RetrainResponse(
-        status="started",
-        message=f"Model retraining started in background for {request.model_type or 'all models'}",
-        task_id=task_id,
+        status=status,
+        message=f"Model retraining completed for {request.model_type or 'all models'}",
+        task_id=None,
     )
 
 

@@ -216,57 +216,6 @@ jobs:
           echo "📥 Pulling latest Docker images..."
           docker pull ${{ secrets.DOCKER_USERNAME }}/mlops-housing-pipeline:latest
 
-          # Start services
-          echo "🚀 Starting services..."
-          docker-compose -f docker-compose.monitoring.yml up -d
-
-          # Wait for services to be ready
-          echo "⏳ Waiting for services to be ready..."
-          sleep 30
-
-          # Health checks
-          echo "🏥 Running health checks..."
-          curl -f http://localhost:8000/health || exit 1
-          curl -f http://localhost:8001/health || exit 1
-
-          echo "✅ Deployment completed successfully!"
-          EOF
-
-          chmod +x deploy.sh
-
-      - name: Upload deployment artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: deployment-scripts
-          path: |
-            deploy.sh
-            docker-compose.monitoring.yml
-
-  deploy:
-    name: Deploy Application
-    runs-on: ubuntu-latest
-    needs: [docker-build-push, security-scan]
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Create deployment script
-        run: |
-          cat > deploy.sh << 'EOF'
-          #!/bin/bash
-          set -e
-
-          echo "🚀 Starting MLOps Pipeline Deployment"
-
-          # Stop existing containers
-          echo "🛑 Stopping existing containers..."
-          docker-compose -f docker-compose.monitoring.yml down || true
-
-          # Pull latest images
-          echo "📥 Pulling latest Docker images..."
-          docker pull ${{ secrets.DOCKER_USERNAME }}/mlops-housing-pipeline:latest
-
           # Update docker-compose to use the new image
           sed -i 's|build: .|image: ${{ secrets.DOCKER_USERNAME }}/mlops-housing-pipeline:latest|g' docker-compose.monitoring.yml
 

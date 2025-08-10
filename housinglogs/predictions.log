@@ -28,3 +28,29 @@
 2025-08-10 18:32:49,984 - INFO - Retrained DecisionTree: MSE=0.525, R²=0.600
 2025-08-10 18:32:49,996 - INFO - Updated main housing model with DecisionTree
 2025-08-10 18:32:50,002 - INFO - Retraining completed: {'start_time': '2025-08-10T18:32:49.436810', 'model_type': 'housing', 'force': True, 'results': {'housing': {'status': 'success', 'best_model': 'DecisionTree', 'best_score': 0.5997321244428706, 'results': {'LinearRegression': {'mse': 0.5558915986952443, 'r2_score': 0.5757877060324508, 'model_path': 'models/LinearRegression.pkl'}, 'DecisionTree': {'mse': 0.5245146178314735, 'r2_score': 0.5997321244428706, 'model_path': 'models/DecisionTree.pkl'}}, 'retrain_time': '2025-08-10T18:32:49.996839'}}, 'end_time': '2025-08-10T18:32:50.002058', 'status': 'completed'}
+2025-08-10 18:47:21,347 - INFO - Retraining requested: model_type=housing, force=True, new_data_path=data/new_housing_data.csv
+2025-08-10 18:47:21,461 - INFO - Starting housing model retraining with data_path: data/new_housing_data.csv
+2025-08-10 18:47:21,461 - INFO - Using custom data path: data/new_housing_data.csv
+2025-08-10 18:47:22,198 - INFO - Retrained LinearRegression: MSE=0.018, R²=0.559
+2025-08-10 18:47:22,396 - INFO - Retrained DecisionTree: MSE=0.090, R²=-1.250
+2025-08-10 18:47:22,405 - INFO - Updated main housing model with LinearRegression
+2025-08-10 18:47:22,420 - INFO - Retraining completed: {'start_time': '2025-08-10T18:47:21.352928', 'model_type': 'housing', 'force': True, 'new_data_path': 'data/new_housing_data.csv', 'results': {'housing': {'status': 'success', 'best_model': 'LinearRegression', 'best_score': 0.5585937500003169, 'results': {'LinearRegression': {'mse': 0.017656249999987318, 'r2_score': 0.5585937500003169, 'model_path': 'models/LinearRegression.pkl'}, 'DecisionTree': {'mse': 0.09000000000000002, 'r2_score': -1.2500000000000018, 'model_path': 'models/DecisionTree.pkl'}}, 'retrain_time': '2025-08-10T18:47:22.406708'}}, 'end_time': '2025-08-10T18:47:22.420192', 'status': 'completed'}
+2025-08-10 18:47:51,375 - INFO - Retraining requested: model_type=housing, force=True, new_data_path=data/new_housing_data.csv
+2025-08-10 18:47:51,384 - INFO - Starting housing model retraining with data_path: data/new_housing_data.csv
+2025-08-10 18:47:51,384 - INFO - Using custom data path: data/new_housing_data.csv
+2025-08-10 18:47:51,581 - INFO - Retrained LinearRegression: MSE=0.018, R²=0.559
+2025-08-10 18:47:51,750 - INFO - Retrained DecisionTree: MSE=0.090, R²=-1.250
+2025-08-10 18:47:51,757 - INFO - Updated main housing model with LinearRegression
+2025-08-10 18:47:51,759 - INFO - Retraining completed: {'start_time': '2025-08-10T18:47:51.384244', 'model_type': 'housing', 'force': True, 'new_data_path': 'data/new_housing_data.csv', 'results': {'housing': {'status': 'success', 'best_model': 'LinearRegression', 'best_score': 0.5585937500003169, 'results': {'LinearRegression': {'mse': 0.017656249999987318, 'r2_score': 0.5585937500003169, 'model_path': 'models/LinearRegression.pkl'}, 'DecisionTree': {'mse': 0.09000000000000002, 'r2_score': -1.2500000000000018, 'model_path': 'models/DecisionTree.pkl'}}, 'retrain_time': '2025-08-10T18:47:51.757635'}}, 'end_time': '2025-08-10T18:47:51.759647', 'status': 'completed'}
+2025-08-10 18:48:13,699 - INFO - Retraining requested: model_type=None, force=False, new_data_path=data/new_housing_data.csv
+2025-08-10 18:48:13,703 - INFO - Retrieved 6 recent predictions for housing
+2025-08-10 18:48:13,711 - INFO - Retrieved 3 recent predictions for iris
+2025-08-10 18:48:13,711 - INFO - Retraining completed: {'start_time': '2025-08-10T18:48:13.699550', 'model_type': None, 'force': False, 'new_data_path': 'data/new_housing_data.csv', 'results': {'housing': {'status': 'skipped', 'reason': 'performance_acceptable', 'performance': {'status': 'insufficient_data', 'message': 'Need at least 100 predictions', 'prediction_count': 6}}, 'iris': {'status': 'skipped', 'reason': 'performance_acceptable', 'performance': {'status': 'insufficient_data', 'message': 'Need at least 50 predictions', 'prediction_count': 3}}}, 'end_time': '2025-08-10T18:48:13.711038', 'status': 'completed'}
+2025-08-10 18:50:52,209 - INFO - Input: {'total_rooms': 5000.0, 'total_bedrooms': 1200.0, 'population': 3000.0, 'households': 2000.0, 'median_income': 5.5, 'housing_median_age': 25.0, 'latitude': 37.88, 'longitude': -122.23} | Prediction: 3.221875000000807
+2025-08-10 18:56:30,266 - INFO - Starting housing model retraining with data_path: data/new_housing_data.csv
+2025-08-10 18:56:30,266 - INFO - Using custom data path: data/new_housing_data.csv
+2025-08-10 18:56:30,867 - INFO - Retrained LinearRegression: MSE=0.018, R²=0.559
+2025-08-10 18:56:31,117 - INFO - Retrained DecisionTree: MSE=0.090, R²=-1.250
+2025-08-10 18:56:31,131 - INFO - Updated main housing model with LinearRegression
+2025-08-10 18:56:31,134 - INFO - Retraining completed: {'start_time': '2025-08-10T18:56:30.091392', 'model_type': 'housing', 'force': True, 'new_data_path': 'data/new_housing_data.csv', 'results': {'housing': {'status': 'success', 'best_model': 'LinearRegression', 'best_score': 0.5585937500003169, 'results': {'LinearRegression': {'mse': 0.017656249999987318, 'r2_score': 0.5585937500003169, 'model_path': 'models/LinearRegression.pkl'}, 'DecisionTree': {'mse': 0.09000000000000002, 'r2_score': -1.2500000000000018, 'model_path': 'models/DecisionTree.pkl'}}, 'retrain_time': '2025-08-10T18:56:31.131356'}}, 'end_time': '2025-08-10T18:56:31.134169', 'status': 'completed'}
+2025-08-10 18:56:31,134 - INFO - Retraining completed: model_type=housing, force=True, new_data_path=data/new_housing_data.csv, status=completed

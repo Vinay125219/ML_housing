@@ -1,7 +1,7 @@
 import os
 import sys
 import time
-from fastapi import FastAPI, HTTPException, Response, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel, Field, validator, ValidationError
 from typing import Optional, Dict, Any
 import pandas as pd
@@ -176,14 +176,14 @@ class HousingRequest(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "total_rooms": 5000.0,
-                "total_bedrooms": 1200.0,
+                "total_rooms": 4500.0,
+                "total_bedrooms": 900.0,
                 "population": 3000.0,
                 "households": 1000.0,
                 "median_income": 5.5,
-                "housing_median_age": 25.0,
-                "latitude": 37.88,
-                "longitude": -122.23,
+                "housing_median_age": 26.0,
+                "latitude": 37.86,
+                "longitude": -122.27,
             }
         }
 
@@ -555,7 +555,7 @@ def run_model_retraining(
 
 
 @app.post("/retrain", response_model=RetrainResponse)
-def retrain_model(request: RetrainRequest, background_tasks: BackgroundTasks):
+def retrain_model(request: RetrainRequest):
     """
     Retrain Model
 
@@ -578,23 +578,25 @@ def retrain_model(request: RetrainRequest, background_tasks: BackgroundTasks):
     # Generate task ID
     task_id = f"retrain_{request.model_type or 'all'}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-    # Start retraining in background
-    background_tasks.add_task(
-        run_model_retraining,
+    # Run retraining synchronously (blocking)
+    run_model_retraining(
         model_type=request.model_type,
         force=request.force,
         new_data_path=request.new_data_path,
     )
 
-    # Log the retraining request
+    # Retrieve last result and respond only after completion
+    result = retraining_status.get("last_result") or {}
+    status = result.get("status", "completed")
+
     logging.info(
-        f"Retraining requested: model_type={request.model_type}, force={request.force}, new_data_path={request.new_data_path}"
+        f"Retraining completed: model_type={request.model_type}, force={request.force}, new_data_path={request.new_data_path}, status={status}"
     )
 
     return RetrainResponse(
-        status="started",
-        message=f"Model retraining started in background for {request.model_type or 'all models'}",
-        task_id=task_id,
+        status=status,
+        message=f"Model retraining completed for {request.model_type or 'all models'}",
+        task_id=None,
     )
 
 
