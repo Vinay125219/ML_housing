@@ -54,7 +54,6 @@ app = FastAPI(
     title="MLOps Iris Classification API",
     description="A comprehensive MLOps pipeline for iris flower classification with automated training, deployment, monitoring, and retraining capabilities.",
     version="1.0.0",
-
 )
 # Expose Prometheus metrics at /metrics
 Instrumentator().instrument(app).expose(
@@ -404,7 +403,6 @@ def run_model_retraining(
     new_data_path: Optional[str] = None,
 ):
     """Background task to run model retraining."""
-    global retraining_status
 
     try:
         retraining_status["is_running"] = True
@@ -507,9 +505,8 @@ def retrain_model(request: RetrainRequest):
     Retrain Model
 
     Trigger model retraining for housing and/or iris models.
-    This endpoint starts retraining in the background and returns immediately.
+    This endpoint runs retraining synchronously and responds only after completion.
     """
-    global retraining_status
 
     # Check if retraining is already running
     if retraining_status["is_running"]:

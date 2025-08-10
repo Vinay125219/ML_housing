@@ -454,7 +454,6 @@ def run_model_retraining(
     new_data_path: Optional[str] = None,
 ):
     """Background task to run model retraining."""
-    global retraining_status
 
     try:
         retraining_status["is_running"] = True
@@ -560,9 +559,8 @@ def retrain_model(request: RetrainRequest):
     Retrain Model
 
     Trigger model retraining for housing and/or iris models.
-    This endpoint starts retraining in the background and returns immediately.
+    This endpoint runs retraining synchronously and responds only after completion.
     """
-    global retraining_status
 
     # Check if retraining is already running
     if retraining_status["is_running"]:
@@ -574,9 +572,6 @@ def retrain_model(request: RetrainRequest):
                 "details": {"current_status": retraining_status},
             },
         )
-
-    # Generate task ID
-    task_id = f"retrain_{request.model_type or 'all'}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
     # Run retraining synchronously (blocking)
     run_model_retraining(
@@ -596,7 +591,6 @@ def retrain_model(request: RetrainRequest):
     return RetrainResponse(
         status=status,
         message=f"Model retraining completed for {request.model_type or 'all models'}",
-        task_id=None,
     )
 
 

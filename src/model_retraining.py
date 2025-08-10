@@ -15,6 +15,7 @@ from typing import Dict, List, Tuple, Optional
 import joblib
 import mlflow
 import mlflow.sklearn
+from mlflow.models.signature import infer_signature
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
@@ -211,7 +212,7 @@ class ModelRetrainer:
             for name, model in models.items():
                 with mlflow.start_run(
                     run_name=f"Retrain_{name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                ):
+                ) as run:
                     # Train model
                     model.fit(X_train, y_train)
                     predictions = model.predict(X_test)
@@ -220,12 +221,22 @@ class ModelRetrainer:
                     mse = mean_squared_error(y_test, predictions)
                     r2 = r2_score(y_test, predictions)
 
-                    # Log metrics
+                    # Log params/metrics
                     mlflow.log_param("model_name", name)
                     mlflow.log_metric("mse", mse)
                     mlflow.log_metric("r2_score", r2)
 
-                    # Save model
+                    # Log model to MLflow with signature and example
+                    signature = infer_signature(X_test, predictions)
+                    input_example = X_test.head(2)
+                    mlflow.sklearn.log_model(
+                        sk_model=model,
+                        artifact_path="model",
+                        input_example=input_example,
+                        signature=signature,
+                    )
+
+                    # Save local copy
                     model_path = f"{self.models_dir}/{name}.pkl"
                     joblib.dump(model, model_path)
 
@@ -233,6 +244,7 @@ class ModelRetrainer:
                         "mse": mse,
                         "r2_score": r2,
                         "model_path": model_path,
+                        "run_id": run.info.run_id,
                     }
 
                     # Track best model
@@ -248,6 +260,18 @@ class ModelRetrainer:
                 main_model_path = f"{self.models_dir}/DecisionTree.pkl"
                 joblib.dump(best_model, main_model_path)
                 logger.info(f"Updated main housing model with {best_name}")
+
+                # Try to register best model in MLflow
+                try:
+                    registered = mlflow.register_model(
+                        model_uri=f"runs:/{results[best_name]['run_id']}/model",
+                        name="HousingPricePredictor",
+                    )
+                    logger.info(
+                        f"Registered HousingPricePredictor version {registered.version}"
+                    )
+                except Exception as e:
+                    logger.warning(f"Model registry step skipped or failed: {e}")
 
             return {
                 "status": "success",
@@ -309,7 +333,7 @@ class ModelRetrainer:
             for name, model in models.items():
                 with mlflow.start_run(
                     run_name=f"Retrain_{name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                ):
+                ) as run:
                     # Train model
                     model.fit(X_train, y_train)
                     predictions = model.predict(X_test)
@@ -318,12 +342,22 @@ class ModelRetrainer:
                     accuracy = accuracy_score(y_test, predictions)
                     f1 = f1_score(y_test, predictions, average="weighted")
 
-                    # Log metrics
+                    # Log params/metrics
                     mlflow.log_param("model_name", name)
                     mlflow.log_metric("accuracy", accuracy)
                     mlflow.log_metric("f1_score", f1)
 
-                    # Save model
+                    # Log model to MLflow with signature and example
+                    signature = infer_signature(X_test, predictions)
+                    input_example = X_test.head(2)
+                    mlflow.sklearn.log_model(
+                        sk_model=model,
+                        artifact_path="model",
+                        input_example=input_example,
+                        signature=signature,
+                    )
+
+                    # Save local copy
                     model_path = f"{self.models_dir}/{name}.pkl"
                     joblib.dump(model, model_path)
 
@@ -331,6 +365,7 @@ class ModelRetrainer:
                         "accuracy": accuracy,
                         "f1_score": f1,
                         "model_path": model_path,
+                        "run_id": run.info.run_id,
                     }
 
                     # Track best model
@@ -348,6 +383,18 @@ class ModelRetrainer:
                 main_model_path = f"{self.models_dir}/RandomForest.pkl"
                 joblib.dump(best_model, main_model_path)
                 logger.info(f"Updated main iris model with {best_name}")
+
+                # Try to register best model in MLflow
+                try:
+                    registered = mlflow.register_model(
+                        model_uri=f"runs:/{results[best_name]['run_id']}/model",
+                        name="IrisClassifier",
+                    )
+                    logger.info(
+                        f"Registered IrisClassifier version {registered.version}"
+                    )
+                except Exception as e:
+                    logger.warning(f"Model registry step skipped or failed: {e}")
 
             return {
                 "status": "success",
