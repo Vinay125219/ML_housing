@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import os
 
+
 def load_and_save():
     # Load the data
     data = fetch_california_housing(as_frame=True)
@@ -26,7 +27,8 @@ def load_and_save():
 
     # Save preprocessed data
     df_processed.to_csv("data/housing.csv", index=False)
-    print("✅ Preprocessed data saved to data/housing.csv")
+    print("Preprocessed data saved to data/housing.csv")
+
 
 if __name__ == "__main__":
     load_and_save()
