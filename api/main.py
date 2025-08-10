@@ -263,7 +263,7 @@ class ModelInfoResponse(BaseModel):
                 "model_type": "iris",
                 "last_trained": "2023-12-01T14:30:22",
                 "performance_metrics": {"accuracy": 0.95, "f1_score": 0.94},
-                "model_path": "models/iris_model.pkl",
+                "model_path": "models/RandomForest.pkl",
             }
         }
 
