@@ -41,6 +41,36 @@ services:
     depends_on:
       - prometheus
 
+  # Data Loading Service
+  data-loader:
+    build: .
+    container_name: mlops-data-loader
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+    command: python src/load_data.py
+    networks:
+      - mlops-network
+
+  # Model Training Service
+  model-training:
+    build: .
+    container_name: mlops-model-training
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./mlruns:/app/mlruns
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+    command: python src/train_and_track.py
+    networks:
+      - mlops-network
+    depends_on:
+      - data-loader
+
   # Housing Price Prediction API
   housing-api:
     build: .
@@ -58,7 +88,7 @@ services:
       - SHARED_DIR=/app/shared
       - PROMETHEUS_URL=http://prometheus:9090
       - MLFLOW_TRACKING_URI=http://mlflow:5000
-    command: uvicorn api.housing_api:app --host 0.0.0.0 --port 8000 --reload
+    command: /app/startup.sh
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -70,6 +100,7 @@ services:
       - mlops-network
     depends_on:
       - prometheus
+      - model-training
 
   # Model Retraining Service
   retraining-service:

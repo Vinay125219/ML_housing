@@ -93,7 +93,17 @@ def _update_gauges():
 # model_uri = "runs:/4bf65a1a6fdd4d9fb80d35b460d5d721/model"
 # model = mlflow.pyfunc.load_model(model_uri)
 
-model = joblib.load("models/DecisionTree.pkl")
+# Try to load the model, if not found, train it first
+try:
+    model = joblib.load("models/DecisionTree.pkl")
+    logging.info("Successfully loaded model from models/DecisionTree.pkl")
+except FileNotFoundError:
+    logging.warning("Model file not found. Training model first...")
+    import subprocess
+    subprocess.run(["python", "src/load_data.py"], check=True)
+    subprocess.run(["python", "src/train_and_track.py"], check=True)
+    model = joblib.load("models/DecisionTree.pkl")
+    logging.info("Model trained and loaded successfully")
 
 logging.basicConfig(
     filename="housinglogs/predictions.log",

@@ -45,5 +45,8 @@ EXPOSE 8000 8002 5000 9090 3000
 ENV PROMETHEUS_URL=http://prometheus:9090
 ENV MLFLOW_TRACKING_URI=http://mlflow:5000
 
-# Default command (can be overridden in docker-compose)
-CMD ["uvicorn", "api.housing_api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Make startup script executable
+RUN chmod +x startup.sh
+
+# Use startup script to ensure proper initialization
+CMD ["/app/startup.sh"]
