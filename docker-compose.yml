@@ -7,6 +7,7 @@ services:
     container_name: mlops-prometheus
     ports:
       - "9090:9090"
+    restart: unless-stopped
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
@@ -25,7 +26,8 @@ services:
     image: grafana/grafana:latest
     container_name: mlops-grafana
     ports:
-      - "3001:3000"
+      - "3000:3000"
+    restart: unless-stopped
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
@@ -49,11 +51,21 @@ services:
       - ./models:/app/models
       - ./data:/app/data
       - ./housinglogs:/app/housinglogs
+      - ./logs:/app/logs
       - shared_data:/app/shared
     environment:
       - PYTHONPATH=/app
       - SHARED_DIR=/app/shared
-    command: uvicorn api.housing_api:app --host 0.0.0.0 --port 8000
+      - PROMETHEUS_URL=http://prometheus:9090
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    command: uvicorn api.housing_api:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - mlops-network
     depends_on:
@@ -70,11 +82,15 @@ services:
       - ./data:/app/data
       - ./housinglogs:/app/housinglogs
       - ./mlruns:/app/mlruns
+      - ./logs:/app/logs
       - shared_data:/app/shared
     environment:
       - PYTHONPATH=/app
       - SHARED_DIR=/app/shared
+      - PROMETHEUS_URL=http://prometheus:9090
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
     command: python src/retraining_scheduler.py
+    restart: unless-stopped
     networks:
       - mlops-network
     depends_on:
@@ -90,8 +106,15 @@ services:
       - ./mlruns:/app/mlruns
     working_dir: /app
     command: >
-      bash -c "pip install mlflow &&
+      bash -c "pip install mlflow>=2.8.0 &&
                mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri file:///app/mlruns"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - mlops-network
 
