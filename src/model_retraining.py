@@ -23,6 +23,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 import warnings
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 warnings.filterwarnings("ignore")
 
@@ -212,51 +213,57 @@ class ModelRetrainer:
 
             results = {}
 
-            for name, model in models.items():
+            # Train each candidate in parallel to speed up retraining
+            def _train_one(name_model):
+                name, mdl = name_model
                 with mlflow.start_run(
                     run_name=f"Retrain_{name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                 ) as run:
-                    # Train model
-                    model.fit(X_train, y_train)
-                    predictions = model.predict(X_test)
+                    mdl.fit(X_train, y_train)
+                    predictions = mdl.predict(X_test)
 
-                    # Calculate metrics
                     mse = mean_squared_error(y_test, predictions)
                     r2 = r2_score(y_test, predictions)
 
-                    # Log params/metrics
                     mlflow.log_param("model_name", name)
                     mlflow.log_metric("mse", mse)
                     mlflow.log_metric("r2_score", r2)
 
-                    # Log model to MLflow with signature and example
                     signature = infer_signature(X_test, predictions)
                     input_example = X_test.head(2)
                     mlflow.sklearn.log_model(
-                        sk_model=model,
+                        sk_model=mdl,
                         name="model",
                         input_example=input_example,
                         signature=signature,
                     )
 
-                    # Save local copy
                     model_path = f"{self.models_dir}/{name}.pkl"
-                    joblib.dump(model, model_path)
+                    joblib.dump(mdl, model_path)
 
-                    results[name] = {
-                        "mse": mse,
-                        "r2_score": r2,
-                        "model_path": model_path,
-                        "run_id": run.info.run_id,
-                    }
+                    return (
+                        name,
+                        mdl,
+                        {
+                            "mse": mse,
+                            "r2_score": r2,
+                            "model_path": model_path,
+                            "run_id": run.info.run_id,
+                        },
+                    )
 
-                    # Track best model
-                    if r2 > best_score:
-                        best_score = r2
-                        best_model = model
+            with ThreadPoolExecutor(max_workers=min(4, len(models))) as executor:
+                futures = [executor.submit(_train_one, item) for item in models.items()]
+                for fut in futures:
+                    name, mdl, res = fut.result()
+                    results[name] = res
+                    if res["r2_score"] > best_score:
+                        best_score = res["r2_score"]
+                        best_model = mdl
                         best_name = name
-
-                    logger.info(f"Retrained {name}: MSE={mse:.3f}, R²={r2:.3f}")
+                    logger.info(
+                        f"Retrained {name}: MSE={res['mse']:.3f}, R²={res['r2_score']:.3f}"
+                    )
 
             # Update the main model with the best performing one
             if best_model:
@@ -333,52 +340,58 @@ class ModelRetrainer:
 
             results = {}
 
-            for name, model in models.items():
+            # Train each candidate in parallel to speed up retraining
+            def _train_one_iris(name_model):
+                name, mdl = name_model
                 with mlflow.start_run(
                     run_name=f"Retrain_{name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                 ) as run:
-                    # Train model
-                    model.fit(X_train, y_train)
-                    predictions = model.predict(X_test)
+                    mdl.fit(X_train, y_train)
+                    predictions = mdl.predict(X_test)
 
-                    # Calculate metrics
                     accuracy = accuracy_score(y_test, predictions)
                     f1 = f1_score(y_test, predictions, average="weighted")
 
-                    # Log params/metrics
                     mlflow.log_param("model_name", name)
                     mlflow.log_metric("accuracy", accuracy)
                     mlflow.log_metric("f1_score", f1)
 
-                    # Log model to MLflow with signature and example
                     signature = infer_signature(X_test, predictions)
                     input_example = X_test.head(2)
                     mlflow.sklearn.log_model(
-                        sk_model=model,
+                        sk_model=mdl,
                         name="model",
                         input_example=input_example,
                         signature=signature,
                     )
 
-                    # Save local copy
                     model_path = f"{self.models_dir}/{name}.pkl"
-                    joblib.dump(model, model_path)
+                    joblib.dump(mdl, model_path)
 
-                    results[name] = {
-                        "accuracy": accuracy,
-                        "f1_score": f1,
-                        "model_path": model_path,
-                        "run_id": run.info.run_id,
-                    }
+                    return (
+                        name,
+                        mdl,
+                        {
+                            "accuracy": accuracy,
+                            "f1_score": f1,
+                            "model_path": model_path,
+                            "run_id": run.info.run_id,
+                        },
+                    )
 
-                    # Track best model
-                    if accuracy > best_score:
-                        best_score = accuracy
-                        best_model = model
+            with ThreadPoolExecutor(max_workers=min(4, len(models))) as executor:
+                futures = [
+                    executor.submit(_train_one_iris, item) for item in models.items()
+                ]
+                for fut in futures:
+                    name, mdl, res = fut.result()
+                    results[name] = res
+                    if res["accuracy"] > best_score:
+                        best_score = res["accuracy"]
+                        best_model = mdl
                         best_name = name
-
                     logger.info(
-                        f"Retrained {name}: Accuracy={accuracy:.3f}, F1={f1:.3f}"
+                        f"Retrained {name}: Accuracy={res['accuracy']:.3f}, F1={res['f1_score']:.3f}"
                     )
 
             # Update the main model with the best performing one

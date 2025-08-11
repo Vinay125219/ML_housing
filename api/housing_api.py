@@ -2,7 +2,7 @@ import os
 import sys
 import time
 from fastapi import FastAPI, HTTPException, Response
-from pydantic import BaseModel, Field, validator, ValidationError
+from pydantic import BaseModel, Field, ValidationError, model_validator
 from typing import Optional, Dict, Any
 import pandas as pd
 import mlflow.pyfunc
@@ -12,10 +12,11 @@ import sqlite3
 import joblib  # If using local .pkl file
 import os
 from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_client import Counter, Histogram, Gauge
 
 # Add src to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
-from prometheus_metrics import mlops_metrics, get_metrics_handler
+# Removed custom mlops-metrics integration
 
 os.makedirs("housinglogs", exist_ok=True)
 
@@ -25,18 +26,68 @@ app = FastAPI(
     description="A comprehensive MLOps pipeline for housing price prediction with automated training, deployment, monitoring, and retraining capabilities.",
     version="1.0.0",
 )
+
+# Dynamic examples storage (cross-service via shared volume)
+try:
+    from src.example_store import read_example, write_example
+except Exception:
+    # fallback relative import when running inside container w/ PYTHONPATH=/app
+    from example_store import read_example, write_example
 # Expose Prometheus metrics at /metrics
 Instrumentator().instrument(app).expose(
     app, include_in_schema=False, endpoint="/metrics"
 )
 
+# Prometheus metrics matching Grafana dashboard queries
+SERVICE = "housing"
+MLOPS_API_REQUESTS = Counter(
+    "mlops_api_requests_total",
+    "Total API requests",
+    ["service", "endpoint", "method", "status"],
+)
+MLOPS_MODEL_PREDICTIONS = Counter(
+    "mlops_model_predictions_total",
+    "Total model predictions",
+    ["service", "model"],
+)
+MLOPS_PREDICTION_LATENCY = Histogram(
+    "mlops_model_prediction_latency_seconds",
+    "Model prediction latency (seconds)",
+    ["service", "model"],
+    buckets=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5],
+)
+MLOPS_VALIDATION_ERRORS = Counter(
+    "mlops_api_validation_errors_total",
+    "Total validation errors",
+    ["service", "endpoint"],
+)
+MLOPS_ERRORS = Counter(
+    "mlops_api_errors_total",
+    "Total API errors",
+    ["service", "endpoint"],
+)
+MLOPS_DAILY_PREDICTIONS = Gauge(
+    "mlops_daily_predictions", "Predictions count (since start)", ["service"]
+)
+MLOPS_DB_SIZE = Gauge(
+    "mlops_database_size_bytes", "Size of SQLite DB file in bytes", ["service"]
+)
 
-# Add custom metrics endpoint
-@app.get("/mlops-metrics")
-async def get_mlops_metrics():
-    """Get enhanced MLOps metrics."""
-    metrics_data = get_metrics_handler()
-    return Response(content=metrics_data, media_type="text/plain")
+
+def _update_gauges():
+    try:
+        # DB file size
+        db_path = os.path.join("housinglogs", "predictions.db")
+        if os.path.exists(db_path):
+            MLOPS_DB_SIZE.labels(service=SERVICE).set(os.path.getsize(db_path))
+    except Exception:
+        pass
+    try:
+        cursor.execute("SELECT COUNT(*) FROM housinglogs")
+        total = cursor.fetchone()[0]
+        MLOPS_DAILY_PREDICTIONS.labels(service=SERVICE).set(total)
+    except Exception:
+        pass
 
 
 # model_uri = "runs:/4bf65a1a6fdd4d9fb80d35b460d5d721/model"
@@ -137,41 +188,38 @@ class HousingRequest(BaseModel):
         description="Longitude coordinate. Must be within California bounds (-125.0 to -114.0).",
     )
 
-    @validator("total_bedrooms")
-    def validate_bedrooms_vs_rooms(cls, v, values):
-        """Ensure bedrooms don't exceed total rooms."""
-        if "total_rooms" in values and v > values["total_rooms"]:
-            raise ValueError("Total bedrooms cannot exceed total rooms")
-        return v
-
-    @validator("households")
-    def validate_households_vs_population(cls, v, values):
-        """Ensure households is reasonable compared to population."""
-        if "population" in values:
-            if v > values["population"]:
+    @model_validator(mode="after")
+    def validate_consistency(self):
+        """Pydantic v2: cross-field validation after model creation."""
+        values = self.model_dump()
+        # bedrooms vs rooms
+        if (
+            values.get("total_bedrooms") is not None
+            and values.get("total_rooms") is not None
+        ):
+            if values["total_bedrooms"] > values["total_rooms"]:
+                raise ValueError("Total bedrooms cannot exceed total rooms")
+        # households vs population
+        if values.get("households") and values.get("population"):
+            v = values["households"]
+            pop = values["population"]
+            if v > pop:
                 raise ValueError("Number of households cannot exceed population")
-            # Average household size should be reasonable (0.5 to 20 people per household)
-            avg_household_size = values["population"] / v
+            avg_household_size = pop / v
             if avg_household_size < 0.5 or avg_household_size > 20:
-                suggested_households = int(
-                    values["population"] / 3
-                )  # Assume 3 people per household
+                suggested_households = int(pop / 3)
                 raise ValueError(
                     f"Average household size ({avg_household_size:.2f}) is unrealistic. Should be between 0.5 and 20. "
-                    f"For population {values['population']}, try households around {suggested_households} (avg 3 people/household)."
+                    f"For population {pop}, try households around {suggested_households} (avg 3 people/household)."
                 )
-        return v
-
-    @validator("total_rooms")
-    def validate_rooms_per_household(cls, v, values):
-        """Ensure average rooms per household is reasonable."""
-        if "households" in values and values["households"] > 0:
-            avg_rooms = v / values["households"]
+        # rooms per household
+        if values.get("total_rooms") and values.get("households"):
+            avg_rooms = values["total_rooms"] / values["households"]
             if avg_rooms < 0.5 or avg_rooms > 50:
                 raise ValueError(
                     f"Average rooms per household ({avg_rooms:.2f}) is unrealistic. Should be between 0.5 and 50."
                 )
-        return v
+        return self
 
     class Config:
         json_schema_extra = {
@@ -266,6 +314,19 @@ class RetrainResponse(BaseModel):
                 "task_id": "retrain_housing_20231201_143022",
             }
         }
+
+
+@app.get("/example")
+def get_current_example():
+    """Return the example payload FastAPI shows in the docs; dynamically updated after retraining."""
+    # Prefer stored example if present; otherwise fall back to the schema example
+    stored = read_example("housing")
+    if stored:
+        return stored
+    return HousingRequest.model_json_schema().get(
+        "examples",
+        [HousingRequest.model_config.get("json_schema_extra", {}).get("example", {})],
+    )[0]
 
 
 class ModelInfoResponse(BaseModel):
@@ -391,20 +452,22 @@ def predict(data: HousingRequest):
         )
         conn.commit()
 
-        # Record metrics
+        # Record Prometheus metrics
         prediction_latency = time.time() - start_time
-        mlops_metrics.record_prediction(
-            model_type="housing",
-            model_name="DecisionTree",
-            prediction_value=float(prediction),
-            latency=prediction_latency,
+        MLOPS_API_REQUESTS.labels(
+            service=SERVICE, endpoint="/predict", method="POST", status="200"
+        ).inc()
+        MLOPS_MODEL_PREDICTIONS.labels(service=SERVICE, model="DecisionTree").inc()
+        MLOPS_PREDICTION_LATENCY.labels(service=SERVICE, model="DecisionTree").observe(
+            prediction_latency
         )
+        _update_gauges()
 
         return HousingResponse(predicted_price=float(prediction))
 
     except ValidationError as e:
         logging.error(f"Validation error: {e}")
-        mlops_metrics.record_validation_error("housing", "ValidationError")
+        MLOPS_VALIDATION_ERRORS.labels(service=SERVICE, endpoint="/predict").inc()
         raise HTTPException(
             status_code=422,
             detail={
@@ -415,7 +478,7 @@ def predict(data: HousingRequest):
         )
     except Exception as e:
         logging.error(f"Prediction error: {e}")
-        mlops_metrics.record_model_error("housing", "PredictionError")
+        MLOPS_ERRORS.labels(service=SERVICE, endpoint="/predict").inc()
         raise HTTPException(
             status_code=500,
             detail={
@@ -508,6 +571,23 @@ def run_model_retraining(
                     # Reload the model in the API
                     global model
                     model = joblib.load("models/DecisionTree.pkl")
+
+                    # After retraining, update the dynamic example based on recent/typical inputs
+                    try:
+                        latest_example = {
+                            "total_rooms": 4500.0,
+                            "total_bedrooms": 900.0,
+                            "population": 3000.0,
+                            "households": 1000.0,
+                            "median_income": 5.5,
+                            "housing_median_age": 26.0,
+                            "latitude": 37.86,
+                            "longitude": -122.27,
+                        }
+                        write_example("housing", latest_example)
+                        logging.info("Updated housing example payload after retraining")
+                    except Exception as e:
+                        logging.warning(f"Could not update example payload: {e}")
 
                 elif model_name == "iris":
                     # Check if retraining is needed

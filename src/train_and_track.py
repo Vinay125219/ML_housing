@@ -11,6 +11,11 @@ import os
 
 # Ensure MLflow logs locally inside the repo (works in CI)
 mlflow.set_tracking_uri("file:./mlruns")
+# Ensure model registry also uses local file store in CI
+try:
+    mlflow.set_registry_uri("file:./mlruns")
+except Exception:
+    pass
 mlflow.set_experiment("housing_price_prediction")
 
 # Load preprocessed data
@@ -47,7 +52,7 @@ def train_and_log_model(model, model_name):
 
         mlflow.sklearn.log_model(
             sk_model=model,
-            name="model",
+            artifact_path="model",
             input_example=input_example,
             signature=signature,
         )

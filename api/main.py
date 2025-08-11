@@ -1,7 +1,7 @@
 import sys
 import time
 from fastapi import FastAPI, HTTPException, Response
-from pydantic import BaseModel, Field, validator, ValidationError
+from pydantic import BaseModel, Field, ValidationError, model_validator
 from typing import Optional, Dict, Any
 import pandas as pd
 
@@ -15,7 +15,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 # Add src to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
-from prometheus_metrics import mlops_metrics, get_metrics_handler
+# Removed custom mlops-metrics integration
 
 # Ensure the log directory exists
 os.makedirs("irislogs", exist_ok=True)
@@ -55,18 +55,69 @@ app = FastAPI(
     description="A comprehensive MLOps pipeline for iris flower classification with automated training, deployment, monitoring, and retraining capabilities.",
     version="1.0.0",
 )
+
+# Dynamic examples storage (cross-service via shared volume)
+try:
+    from src.example_store import read_example, write_example
+except Exception:
+    from example_store import read_example, write_example
+
 # Expose Prometheus metrics at /metrics
 Instrumentator().instrument(app).expose(
     app, include_in_schema=False, endpoint="/metrics"
 )
 
+# Prometheus metrics matching Grafana dashboard queries
+SERVICE = "iris"
+from prometheus_client import Counter, Histogram, Gauge
 
-# Add custom metrics endpoint
-@app.get("/mlops-metrics")
-async def get_mlops_metrics():
-    """Get enhanced MLOps metrics."""
-    metrics_data = get_metrics_handler()
-    return Response(content=metrics_data, media_type="text/plain")
+MLOPS_API_REQUESTS = Counter(
+    "mlops_api_requests_total",
+    "Total API requests",
+    ["service", "endpoint", "method", "status"],
+)
+MLOPS_MODEL_PREDICTIONS = Counter(
+    "mlops_model_predictions_total",
+    "Total model predictions",
+    ["service", "model"],
+)
+MLOPS_PREDICTION_LATENCY = Histogram(
+    "mlops_model_prediction_latency_seconds",
+    "Model prediction latency (seconds)",
+    ["service", "model"],
+    buckets=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5],
+)
+MLOPS_VALIDATION_ERRORS = Counter(
+    "mlops_api_validation_errors_total",
+    "Total validation errors",
+    ["service", "endpoint"],
+)
+MLOPS_ERRORS = Counter(
+    "mlops_api_errors_total",
+    "Total API errors",
+    ["service", "endpoint"],
+)
+MLOPS_DAILY_PREDICTIONS = Gauge(
+    "mlops_daily_predictions", "Predictions count (since start)", ["service"]
+)
+MLOPS_DB_SIZE = Gauge(
+    "mlops_database_size_bytes", "Size of SQLite DB file in bytes", ["service"]
+)
+
+
+def _update_gauges():
+    try:
+        db_path = os.path.join("irislogs", "predictions.db")
+        if os.path.exists(db_path):
+            MLOPS_DB_SIZE.labels(service=SERVICE).set(os.path.getsize(db_path))
+    except Exception:
+        pass
+    try:
+        cursor.execute("SELECT COUNT(*) FROM irislogs")
+        total = cursor.fetchone()[0]
+        MLOPS_DAILY_PREDICTIONS.labels(service=SERVICE).set(total)
+    except Exception:
+        pass
 
 
 # Expected input features
@@ -117,35 +168,34 @@ class IrisRequest(BaseModel):
         description="Petal width in centimeters. Must be between 0.05 and 3.0 cm (reasonable biological range).",
     )
 
-    @validator("petal_width")
-    def validate_petal_proportions(cls, v, values):
-        """Ensure petal width is reasonable compared to petal length."""
-        if "petal_length" in values:
-            # Petal width should generally be less than petal length
-            if v > values["petal_length"]:
+    @model_validator(mode="after")
+    def validate_consistency(self):
+        values = self.model_dump()
+        # Petal width vs petal length
+        if (
+            values.get("petal_width") is not None
+            and values.get("petal_length") is not None
+        ):
+            if values["petal_width"] > values["petal_length"]:
                 raise ValueError("Petal width cannot be greater than petal length")
-            # Aspect ratio should be reasonable (width/length ratio between 0.01 and 1.0)
-            ratio = v / values["petal_length"]
+            ratio = values["petal_width"] / values["petal_length"]
             if ratio < 0.01 or ratio > 1.0:
                 raise ValueError(
                     f"Petal width/length ratio ({ratio:.3f}) is unrealistic. Should be between 0.01 and 1.0."
                 )
-        return v
-
-    @validator("sepal_width")
-    def validate_sepal_proportions(cls, v, values):
-        """Ensure sepal width is reasonable compared to sepal length."""
-        if "sepal_length" in values:
-            # Sepal width should generally be less than sepal length
-            if v > values["sepal_length"]:
+        # Sepal width vs sepal length
+        if (
+            values.get("sepal_width") is not None
+            and values.get("sepal_length") is not None
+        ):
+            if values["sepal_width"] > values["sepal_length"]:
                 raise ValueError("Sepal width cannot be greater than sepal length")
-            # Aspect ratio should be reasonable (width/length ratio between 0.2 and 1.0)
-            ratio = v / values["sepal_length"]
-            if ratio < 0.2 or ratio > 1.0:
+            ratio2 = values["sepal_width"] / values["sepal_length"]
+            if ratio2 < 0.2 or ratio2 > 1.0:
                 raise ValueError(
-                    f"Sepal width/length ratio ({ratio:.3f}) is unrealistic. Should be between 0.2 and 1.0."
+                    f"Sepal width/length ratio ({ratio2:.3f}) is unrealistic. Should be between 0.2 and 1.0."
                 )
-        return v
+        return self
 
     class Config:
         json_schema_extra = {
@@ -346,20 +396,21 @@ def predict(data: IrisRequest):
         )
         conn.commit()
 
-        # Record metrics
+        # Record latency and Prometheus metrics
         prediction_latency = time.time() - start_time
-        mlops_metrics.record_prediction(
-            model_type="iris",
-            model_name="RandomForest",
-            prediction_value=float(predicted_class),
-            latency=prediction_latency,
+        MLOPS_API_REQUESTS.labels(
+            service=SERVICE, endpoint="/predict", method="POST", status="200"
+        ).inc()
+        MLOPS_MODEL_PREDICTIONS.labels(service=SERVICE, model="RandomForest").inc()
+        MLOPS_PREDICTION_LATENCY.labels(service=SERVICE, model="RandomForest").observe(
+            prediction_latency
         )
+        _update_gauges()
 
         return IrisResponse(predicted_class=predicted_class, class_name=class_name)
 
     except ValidationError as e:
         logging.error(f"Validation error: {e}")
-        mlops_metrics.record_validation_error("iris", "ValidationError")
         raise HTTPException(
             status_code=422,
             detail={
@@ -370,7 +421,6 @@ def predict(data: IrisRequest):
         )
     except Exception as e:
         logging.error(f"Prediction error: {e}")
-        mlops_metrics.record_model_error("iris", "PredictionError")
         raise HTTPException(
             status_code=500,
             detail={
@@ -455,7 +505,20 @@ def run_model_retraining(
 
                     # Reload the model in the API
                     global model
-                    model = joblib.load("models/iris_model.pkl")
+                    model = joblib.load("models/RandomForest.pkl")
+
+                    # After retraining, update the dynamic example based on typical inputs
+                    try:
+                        latest_example = {
+                            "sepal_length": 5.8,
+                            "sepal_width": 3.0,
+                            "petal_length": 4.3,
+                            "petal_width": 1.3,
+                        }
+                        write_example("iris", latest_example)
+                        logging.info("Updated iris example payload after retraining")
+                    except Exception as e:
+                        logging.warning(f"Could not update iris example payload: {e}")
 
                 elif model_name == "housing":
                     # Check if retraining is needed
@@ -588,3 +651,15 @@ def get_model_info():
                 "details": str(e),
             },
         )
+
+
+@app.get("/example")
+def get_current_example():
+    """Return the example payload FastAPI shows in the docs; dynamically updated after retraining."""
+    stored = read_example("iris")
+    if stored:
+        return stored
+    return IrisRequest.model_json_schema().get(
+        "examples",
+        [IrisRequest.model_config.get("json_schema_extra", {}).get("example", {})],
+    )[0]

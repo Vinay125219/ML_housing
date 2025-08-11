@@ -1,5 +1,0 @@
-2025-08-08 12:52:43,234 - INFO - Input: {'sepal length (cm)': 10.0, 'sepal width (cm)': 10.0, 'petal length (cm)': 10.0, 'petal width (cm)': 10.0} | Prediction: 2
-2025-08-10 18:26:59,561 - WARNING - email-validator not installed, email fields will be treated as str.
-To install, run: pip install email-validator
-2025-08-10 18:46:16,434 - WARNING - email-validator not installed, email fields will be treated as str.
-To install, run: pip install email-validator
