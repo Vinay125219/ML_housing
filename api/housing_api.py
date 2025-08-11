@@ -12,7 +12,7 @@ import sqlite3
 import joblib  # If using local .pkl file
 import os
 from prometheus_fastapi_instrumentator import Instrumentator
-from prometheus_client import Counter, Histogram, Gauge
+from prometheus_client import Counter, Histogram, Gauge, REGISTRY
 
 # Add src to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
@@ -279,7 +279,7 @@ class RetrainRequest(BaseModel):
 
     model_type: Optional[str] = Field(
         None,
-        description="Type of model to retrain: 'housing', 'iris', or None for both",
+        description="Type of model to retrain: 'housing' or None for both",
     )
     force: bool = Field(
         False, description="Force retraining even if performance is acceptable"
@@ -333,7 +333,7 @@ class ModelInfoResponse(BaseModel):
     """Response model for model information."""
 
     model_name: str = Field(..., description="Name of the model")
-    model_type: str = Field(..., description="Type of model (housing/iris)")
+    model_type: str = Field(..., description="Type of model (housing)")
     last_trained: Optional[str] = Field(None, description="Last training timestamp")
     performance_metrics: Optional[dict] = Field(
         None, description="Current performance metrics"
@@ -539,13 +539,7 @@ def run_model_retraining(
         }
 
         # Determine which models to retrain
-        models_to_retrain = []
-        if model_type == "housing":
-            models_to_retrain = ["housing"]
-        elif model_type == "iris":
-            models_to_retrain = ["iris"]
-        else:
-            models_to_retrain = ["housing", "iris"]
+        models_to_retrain = ["housing"]
 
         # Retrain models
         for model_name in models_to_retrain:
@@ -589,23 +583,7 @@ def run_model_retraining(
                     except Exception as e:
                         logging.warning(f"Could not update example payload: {e}")
 
-                elif model_name == "iris":
-                    # Check if retraining is needed
-                    if not force:
-                        performance = monitor.evaluate_model_performance("iris")
-                        if not performance.get("needs_retraining", False):
-                            results["results"]["iris"] = {
-                                "status": "skipped",
-                                "reason": "performance_acceptable",
-                                "performance": performance,
-                            }
-                            continue
 
-                    # Retrain iris model
-                    retrain_result = retrainer.retrain_iris_model(
-                        data_path=new_data_path
-                    )
-                    results["results"]["iris"] = retrain_result
 
             except Exception as e:
                 results["results"][model_name] = {"status": "failed", "error": str(e)}

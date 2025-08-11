@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create necessary directories
-RUN mkdir -p housinglogs irislogs models data mlruns logs
+RUN mkdir -p housinglogs models data mlruns logs
 
 # Set Python path
 ENV PYTHONPATH=/app

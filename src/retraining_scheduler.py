@@ -37,7 +37,7 @@ class RetrainingStatus(BaseModel):
 class RetrainingRequest(BaseModel):
     """Model for manual retraining request."""
 
-    model_type: Optional[str] = None  # 'housing', 'iris', or None for both
+    model_type: Optional[str] = None  # 'housing' or None for both
     force: bool = False  # Force retraining even if performance is good
 
 
@@ -97,7 +97,6 @@ class RetrainingScheduler:
             monitor = ModelPerformanceMonitor()
 
             housing_perf = monitor.evaluate_model_performance("housing")
-            iris_perf = monitor.evaluate_model_performance("iris")
 
             # Log performance status
             if housing_perf.get("needs_retraining", False):
@@ -105,16 +104,10 @@ class RetrainingScheduler:
                     "Housing model performance degraded, retraining recommended"
                 )
 
-            if iris_perf.get("needs_retraining", False):
-                logger.warning(
-                    "Iris model performance degraded, retraining recommended"
-                )
-
             # Save performance check results
             performance_results = {
                 "check_time": datetime.now().isoformat(),
                 "housing": housing_perf,
-                "iris": iris_perf,
             }
 
             with open("performance_check.json", "w") as f:

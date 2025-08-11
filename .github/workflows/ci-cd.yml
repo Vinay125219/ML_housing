@@ -84,7 +84,7 @@ jobs:
 
       - name: Create necessary directories
         run: |
-          mkdir -p models data housinglogs irislogs mlruns
+          mkdir -p models data housinglogs mlruns
 
       - name: Prepare data (generate housing.csv)
         run: |
@@ -93,7 +93,6 @@ jobs:
       - name: Train models for testing
         run: |
           python src/train_and_track.py
-          python src/train_iris.py
 
       - name: Run validation tests
         run: |
@@ -215,12 +214,10 @@ jobs:
           # Health checks
           echo "🏥 Running health checks..."
           curl -f http://localhost:8000/health || exit 1
-          curl -f http://localhost:8001/health || exit 1
 
           echo "✅ Deployment completed successfully!"
           echo "🌐 Services available at:"
           echo "  - Housing API: http://localhost:8000/docs"
-          echo "  - Iris API: http://localhost:8001/docs"
           echo "  - Grafana: http://localhost:3000"
           echo "  - MLflow: http://localhost:5000"
           EOF
