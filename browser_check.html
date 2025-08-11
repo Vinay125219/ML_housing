@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLOps Services Check</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .service {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .service h2 {
+            margin-top: 0;
+            color: #444;
+        }
+        .service-links a {
+            display: inline-block;
+            margin-right: 15px;
+            margin-bottom: 10px;
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .service-links a:hover {
+            background-color: #45a049;
+        }
+        .note {
+            background-color: #ffffd9;
+            padding: 10px;
+            border-left: 4px solid #ffeb3b;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>MLOps Services Dashboard</h1>
+    
+    <div class="note">
+        <p><strong>Note:</strong> Replace the port numbers below with your actual assigned ports:</p>
+        <ul>
+            <li>Grafana: 32792</li>
+            <li>MLflow: 32793</li>
+            <li>Housing API: 32794</li>
+            <li>Retraining Service: 32795</li>
+            <li>Prometheus: 32796</li>
+        </ul>
+    </div>
+
+    <div class="service">
+        <h2>Housing API</h2>
+        <p>The main prediction service for housing prices.</p>
+        <div class="service-links">
+            <a href="http://localhost:32794/docs" target="_blank">API Documentation</a>
+            <a href="http://localhost:32794/health" target="_blank">Health Check</a>
+            <a href="http://localhost:32794/metrics" target="_blank">Metrics</a>
+        </div>
+    </div>
+
+    <div class="service">
+        <h2>Grafana</h2>
+        <p>Visualization dashboard for monitoring metrics.</p>
+        <div class="service-links">
+            <a href="http://localhost:32792" target="_blank">Grafana Dashboard</a>
+            <p><strong>Default credentials:</strong> admin/admin</p>
+        </div>
+    </div>
+
+    <div class="service">
+        <h2>MLflow</h2>
+        <p>Model tracking and registry service.</p>
+        <div class="service-links">
+            <a href="http://localhost:32793" target="_blank">MLflow UI</a>
+        </div>
+    </div>
+
+    <div class="service">
+        <h2>Retraining Service</h2>
+        <p>Service for scheduling model retraining.</p>
+        <div class="service-links">
+            <a href="http://localhost:32795/health" target="_blank">Health Check</a>
+        </div>
+    </div>
+
+    <div class="service">
+        <h2>Prometheus</h2>
+        <p>Metrics collection and storage.</p>
+        <div class="service-links">
+            <a href="http://localhost:32796" target="_blank">Prometheus UI</a>
+            <a href="http://localhost:32796/-/healthy" target="_blank">Health Check</a>
+        </div>
+    </div>
+
+    <script>
+        // You could add JavaScript here to dynamically check service availability
+    </script>
+</body>
+</html>
