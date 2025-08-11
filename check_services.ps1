@@ -1,11 +1,11 @@
 # PowerShell script to check the health of all services
 
 $services = @(
-    @{name="Grafana"; url="http://localhost:32792/api/health"; expected="ok"},
-    @{name="MLflow"; url="http://localhost:32793"; expected=""}, # MLflow doesn't have a specific health endpoint
-    @{name="Housing API"; url="http://localhost:32794/health"; expected="healthy"},
-    @{name="Retraining Service"; url="http://localhost:32795/health"; expected="healthy"},
-    @{name="Prometheus"; url="http://localhost:32796/-/healthy"; expected=""} # Prometheus returns 200 OK
+    @{name="Grafana"; url="http://localhost:3001/api/health"; expected="ok"},
+    @{name="MLflow"; url="http://localhost:5000"; expected=""}, # MLflow doesn't have a specific health endpoint
+    @{name="Housing API"; url="http://localhost:8000/health"; expected="healthy"},
+    @{name="Retraining Service"; url="http://localhost:8002/health"; expected="healthy"},
+    @{name="Prometheus"; url="http://localhost:9090/-/healthy"; expected=""} # Prometheus returns 200 OK
 )
 
 Write-Host "Checking service health..." -ForegroundColor Cyan
@@ -42,9 +42,9 @@ foreach ($service in $services) {
 
 Write-Host "\nService URLs:" -ForegroundColor Cyan
 Write-Host "=============" -ForegroundColor Cyan
-Write-Host "Grafana:            http://localhost:32792" -ForegroundColor Yellow
-Write-Host "MLflow:             http://localhost:32793" -ForegroundColor Yellow
-Write-Host "Housing API:        http://localhost:32794" -ForegroundColor Yellow
-Write-Host "Housing API Docs:   http://localhost:32794/docs" -ForegroundColor Yellow
-Write-Host "Retraining Service: http://localhost:32795" -ForegroundColor Yellow
-Write-Host "Prometheus:         http://localhost:32796" -ForegroundColor Yellow
+Write-Host "Grafana:            http://localhost:3001" -ForegroundColor Yellow
+Write-Host "MLflow:             http://localhost:5000" -ForegroundColor Yellow
+Write-Host "Housing API:        http://localhost:8000" -ForegroundColor Yellow
+Write-Host "Housing API Docs:   http://localhost:8000/docs" -ForegroundColor Yellow
+Write-Host "Retraining Service: http://localhost:8002" -ForegroundColor Yellow
+Write-Host "Prometheus:         http://localhost:9090" -ForegroundColor Yellow

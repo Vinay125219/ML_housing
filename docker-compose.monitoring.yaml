@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # Prometheus for metrics collection
   prometheus:
     image: prom/prometheus:latest
     container_name: mlops-prometheus
@@ -27,12 +26,11 @@ services:
     networks:
       - mlops-network
 
-  # Grafana for visualization
   grafana:
     image: grafana/grafana:latest
     container_name: mlops-grafana
     ports:
-      - "3000:3000"
+      - "3001:3000"
     restart: unless-stopped
     volumes:
       - grafana_data:/var/lib/grafana
@@ -53,9 +51,8 @@ services:
     depends_on:
       - prometheus
 
-  # Data Loading Service
   data-loader:
-    image: ${DOCKER_USERNAME:-username}/mlops-housing-pipeline:latest
+    image: ${DOCKER_USERNAME:-vinay125219}/mlops-housing-pipeline:latest
     container_name: mlops-data-loader
     volumes:
       - ./data:/app/data
@@ -66,9 +63,8 @@ services:
     networks:
       - mlops-network
 
-  # Model Training Service
   model-training:
-    image: ${DOCKER_USERNAME:-username}/mlops-housing-pipeline:latest
+    image: ${DOCKER_USERNAME:-vinay125219}/mlops-housing-pipeline:latest
     container_name: mlops-model-training
     volumes:
       - ./models:/app/models
@@ -83,9 +79,8 @@ services:
     depends_on:
       - data-loader
 
-  # Housing Price Prediction API
   housing-api:
-    image: ${DOCKER_USERNAME:-username}/mlops-housing-pipeline:latest
+    image: ${DOCKER_USERNAME:-vinay125219}/mlops-housing-pipeline:latest
     container_name: mlops-housing-api
     ports:
       - "8000:8000"
@@ -114,9 +109,8 @@ services:
       - prometheus
       - model-training
 
-  # Model Retraining Service
   retraining-service:
-    image: ${DOCKER_USERNAME:-username}/mlops-housing-pipeline:latest
+    image: ${DOCKER_USERNAME:-vinay125219}/mlops-housing-pipeline:latest
     container_name: mlops-retraining
     ports:
       - "8002:8002"
@@ -145,7 +139,6 @@ services:
     depends_on:
       - housing-api
 
-  # MLflow Tracking Server
   mlflow:
     image: python:3.10-slim
     container_name: mlops-mlflow
@@ -166,7 +159,6 @@ services:
       start_period: 40s
     networks:
       - mlops-network
-
 
 volumes:
   prometheus_data:
