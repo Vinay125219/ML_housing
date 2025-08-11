@@ -160,6 +160,29 @@ services:
     networks:
       - mlops-network
 
+  # New Streamlit UI service
+  streamlit-ui:
+    image: ${DOCKER_USERNAME:-vinay125219}/mlops-housing-pipeline:latest
+    container_name: mlops-streamlit-ui
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./logs:/app/logs  # Share logs or other volumes as needed
+    environment:
+      - PYTHONPATH=/app
+    command: streamlit run streamlit_app.py --server.port=8501 --server.address=0.0.0.0
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - mlops-network
+    depends_on:
+      - housing-api  # Ensure it starts after core services
+
 volumes:
   prometheus_data:
   grafana_data:

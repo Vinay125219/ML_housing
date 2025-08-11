@@ -16,6 +16,7 @@ COPY requirements.txt .
 
 # Install Python dependencies with specific versions to avoid compatibility issues
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install streamlit  # Add Streamlit installation
 
 # Verify installations
 RUN pip list
@@ -39,7 +40,8 @@ USER mlops
 # 5000: MLflow tracking server
 # 9090: Prometheus
 # 3000: Grafana
-EXPOSE 8000 8002 5000 9090 3000
+# 8501: Streamlit UI (new)
+EXPOSE 8000 8002 5000 9090 3000 8501
 
 # Set environment variables for service discovery
 ENV PROMETHEUS_URL=http://prometheus:9090
