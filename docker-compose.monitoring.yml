@@ -55,7 +55,7 @@ services:
 
   # Data Loading Service
   data-loader:
-    build: .
+    image: ${DOCKER_USERNAME:-username}/mlops-housing-pipeline:latest
     container_name: mlops-data-loader
     volumes:
       - ./data:/app/data
@@ -68,7 +68,7 @@ services:
 
   # Model Training Service
   model-training:
-    build: .
+    image: ${DOCKER_USERNAME:-username}/mlops-housing-pipeline:latest
     container_name: mlops-model-training
     volumes:
       - ./models:/app/models
@@ -85,7 +85,7 @@ services:
 
   # Housing Price Prediction API
   housing-api:
-    build: .
+    image: ${DOCKER_USERNAME:-username}/mlops-housing-pipeline:latest
     container_name: mlops-housing-api
     ports:
       - "8000:8000"
@@ -116,10 +116,10 @@ services:
 
   # Model Retraining Service
   retraining-service:
-    build: .
+    image: ${DOCKER_USERNAME:-username}/mlops-housing-pipeline:latest
     container_name: mlops-retraining
     ports:
-      - "80002:8002"
+      - "8002:8002"
     volumes:
       - ./models:/app/models
       - ./data:/app/data

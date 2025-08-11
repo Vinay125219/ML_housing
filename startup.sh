@@ -26,4 +26,5 @@ fi
 
 # Start the API service
 echo "Starting API service..."
+# Make sure to bind to all interfaces and use the port that's exposed in the container
 exec uvicorn api.housing_api:app --host 0.0.0.0 --port 8000 --reload

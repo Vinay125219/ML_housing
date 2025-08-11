@@ -46,13 +46,43 @@
             border-left: 4px solid #ffeb3b;
             margin-bottom: 20px;
         }
+        .status-check {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        .status-check button {
+            padding: 8px 15px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .status-check button:hover {
+            background-color: #0b7dda;
+        }
+        .status-results {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            color: green;
+        }
+        .failure {
+            color: red;
+        }
     </style>
 </head>
 <body>
     <h1>MLOps Services Dashboard</h1>
     
     <div class="note">
-        <p><strong>Note:</strong> Replace the port numbers below with your actual assigned ports:</p>
+        <p><strong>Note:</strong> The services are configured with the following ports:</p>
         <ul>
             <li>Grafana: 32792</li>
             <li>MLflow: 32793</li>
@@ -102,12 +132,45 @@
         <p>Metrics collection and storage.</p>
         <div class="service-links">
             <a href="http://localhost:32796" target="_blank">Prometheus UI</a>
-            <a href="http://localhost:32796/-/healthy" target="_blank">Health Check</a>
         </div>
     </div>
 
+    <div class="status-check">
+        <h2>Service Status Check</h2>
+        <p>Click the button below to check the status of all services:</p>
+        <button onclick="checkServices()">Check All Services</button>
+        <div id="status-results" class="status-results"></div>
+    </div>
+
     <script>
-        // You could add JavaScript here to dynamically check service availability
+        async function checkServices() {
+            const services = [
+                { name: "Housing API", url: "http://localhost:32794/health" },
+                { name: "Grafana", url: "http://localhost:32792/api/health" },
+                { name: "MLflow", url: "http://localhost:32793" },
+                { name: "Retraining Service", url: "http://localhost:32795/health" },
+                { name: "Prometheus", url: "http://localhost:32796/-/healthy" }
+            ];
+            
+            const resultsDiv = document.getElementById('status-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<p>Checking services...</p>';
+            
+            let results = '';
+            
+            for (const service of services) {
+                results += `<p>Checking ${service.name}... `;
+                
+                try {
+                    const response = await fetch(service.url, { mode: 'no-cors' });
+                    results += `<span class="success">ACCESSIBLE</span></p>`;
+                } catch (error) {
+                    results += `<span class="failure">NOT ACCESSIBLE</span></p>`;
+                }
+            }
+            
+            resultsDiv.innerHTML = results;
+        }
     </script>
 </body>
 </html>
