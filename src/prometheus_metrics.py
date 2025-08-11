@@ -17,6 +17,7 @@ from prometheus_client import (
     Histogram,
     Gauge,
     Info,
+    CollectorRegistry,
     generate_latest,
 )
 import logging
